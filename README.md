@@ -24,4 +24,4 @@ Memory size is dependent on the buffer size set and the size of the data fed to 
 
 ## Documentation
 
-All documentation on how to use KEF and how to implement KEF in your project is available in the wiki.
+All documentation on how to use KEF and how to implement KEF in your project is available on the [wiki](https://github.com/tpkarras/KEF/wiki).
