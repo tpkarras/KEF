@@ -9,7 +9,7 @@ KEF is released under the GNU General Public License v3.0.
 If you have composer, you can use the command below.
 
 ```sh
-composer require tpkarras/KEF
+composer require tpkarras/kef
 ```
 
 Otherwise you can extract the files from the "bin" directory and place them anywhere within your PHP project.
