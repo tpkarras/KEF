@@ -26,7 +26,7 @@ Settings::throwException(0, 4);
 if(version_compare(PHP_VERSION, "7.1.0") > -1 && is_string($aad) && empty($aad)){
 Settings::throwException(0, 4);
 }
-if($byte_range !== 0 && $byte_range < Settings::MIN_BYTES && $byte_range > Settings::MAX_BYTES){
+if($byte_range !== 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
 Settings::throwException(0, 1);
 }
 if($byte_range === 0){
