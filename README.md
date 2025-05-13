@@ -1,6 +1,8 @@
 # KEF
 
-**KEF (Karras Encryption Format)** is an encryption format designed for storing encrypted data within a range of a specific number of bytes.
+**KEF (Karras Encryption Format)** is an encryption format designed for storing encrypted data.
+
+Its intended purpose is to allow applications to be able to retrieve ranges of data without decrypting the entirety of the data.
 
 KEF is released under the GNU General Public License v3.0.
 
