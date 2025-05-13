@@ -444,7 +444,12 @@ array_push($this->size_array, $size_array_element);
 $size_array_element = 0;
 }
 if($this->cipher === null && count($cipher) === $octet_count){
+try {
 $this->cipher = CipherTools::convertCipher($cipher);
+} catch (Exception $e){
+$this->clearData();
+throw $e;
+}
 unset($cipher);
 $octet_count = null;
 continue;
