@@ -240,7 +240,7 @@ $checksum = null;
 $total_length = null;
 $ch = curl_init($data);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$buffer_size * ($level - 1)."-".$buffer_size * $level - 1]);
-curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/0.0 (https://github.com/tpkarras)");
+curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.0.0 (https://github.com/tpkarras)");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HEADERFUNCTION,
   function($curl, $header) use (&$response_code, &$checksum, &$total_length)
