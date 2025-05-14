@@ -1,5 +1,9 @@
 # KEF
 
+[![Total Downloads](https://img.shields.io/packagist/dt/tpkarras/kef)](https://packagist.org/packages/tpkarras/kef)
+[![Latest Stable Version](https://img.shields.io/packagist/v/tpkarras/kef)](https://packagist.org/packages/tpkarras/kef)
+[![PHP Version Required](https://img.shields.io/packagist/dependency-v/tpkarras/kef/php)](https://packagist.org/packages/tpkarras/kef)
+
 **KEF (Karras Encryption Format)** is an encryption format designed for storing encrypted data.
 
 Its intended purpose is to allow applications to be able to retrieve ranges of data without decrypting the entirety of the data.
