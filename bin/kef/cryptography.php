@@ -399,7 +399,7 @@ $cipher = [];
 while(true){
 $number = hexdec(bin2hex(substr($data, $current_position, 1)));
 $current_position++;
-if(isset($is_buffer) && $current_position === $buffer_size * $buffer_level){
+if(isset($is_buffer) && $current_position === $buffer_size){
 $data_start = $current_position + $data_start;
 $buffer_level++;
 $current_position = 0;
