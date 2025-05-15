@@ -12,7 +12,7 @@ if(!is_string($cipher)){
 Settings::throwException(0, 9, "Parameter \"\$cipher\" is required to be of type \"string\"");
 }
 if(!is_int($byte_range)){
-Settings::throwException(0, 9, "Parameter \"\$cipher\" is required to be of type \"int\"");
+Settings::throwException(0, 9, "Parameter \"\$byte_range\" is required to be of type \"int\"");
 }
 if(!is_string($aad) && !is_null($aad)){
 Settings::throwException(0, 9, "Parameter \"\$aad\" is required to be of type \"string/null\"");
