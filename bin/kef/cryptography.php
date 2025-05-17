@@ -1086,7 +1086,7 @@ $has_tag = true;
 
 if($end === 0){
 	
-$end = $info->getLength();
+$end = $info->getLength() - 1;
 
 }
 
@@ -1142,7 +1142,7 @@ $start_trigger = $trigger;
 
 $trigger = 0;
 
-if($end < $info->getLength()){
+if($end + 1 < $info->getLength()){
 	
 $trim = $end + 1;
 
@@ -1391,7 +1391,7 @@ continue;
 
 }
 
-if($start === 0 && $end === $info->getLength() && (strlen($decrypted_data) !== $info->getLength() || !hash_equals($info->getChecksum(), md5($decrypted_data)))){
+if($start === 0 && $end +1 === $info->getLength() && (strlen($decrypted_data) !== $info->getLength() || !hash_equals($info->getChecksum(), md5($decrypted_data)))){
 	
 Settings::throwException(1, 13);
 
