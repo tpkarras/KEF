@@ -1,7 +1,7 @@
 {
 	"name": "tpkarras/kef",
 	"description": "An encryption format designed for storing encrypted data within a range of a specific number of bytes.",
-	"version": "1.0.0",
+	"version": "1.5.0",
 	"type": "library",
 	"keywords": ["encryption","decryption","format","openssl","cryptography"],
 	"homepage": "https://github.com/tpkarras/KEF",
@@ -11,7 +11,7 @@
 	"wiki": "https://github.com/tpkarras/KEF/wiki"
 	},
     "require": {
-        "php": ">=5.6.0"
+        "php": ">=7.4.0"
     },
     "autoload": {
         "files": ["bin/kef.php"]

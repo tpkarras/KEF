@@ -5,14 +5,14 @@ function convertCharacter($character){
 
 if(!is_string($character) && !is_int($character)){
 
-Settings::throwException(4, 9, "Parameter \"\$character\" is required to be of type \"int/string\"");
+throw new KEFException(4, 9, "Parameter \"\$character\" is required to be of type \"int/string\"");
 
 }
 
 if(is_string($character)){
 
 if(empty($character)){
-Settings::throwException(4, 4);
+throw new KEFException(4, 4);
 }
 
 $character_int = array();
@@ -36,9 +36,9 @@ $temp_c = 0;
 
 if($c >= hexdec("C0") && $c <= hexdec("DF")){
 	
-if(count($character) !== 2){
+if(count($character) != 2){
 	
-Settings::throwException(4, 7);
+throw new KEFException(4, 7);
 
 }
 
@@ -47,9 +47,9 @@ $subtractor = hexdec("C0");
 
 } else if($c >= hexdec("E0") && $c <= hexdec("EF")){
 	
-if(count($character) !== 3){
+if(count($character) != 3){
 	
-Settings::throwException(4, 7);
+throw new KEFException(4, 7);
 
 }
 
@@ -58,9 +58,9 @@ $subtractor = hexdec("E0");
 
 } else if($c >= hexdec("F0") && $c <= hexdec("F7")){
 	
-if(count($character) !== 4){
+if(count($character) != 4){
 
-Settings::throwException(4, 7);
+throw new KEFException(4, 7);
 
 }
 
@@ -69,9 +69,9 @@ $subtractor = hexdec("F0");
 
 } else if($c >= hexdec("F8") && $c <= hexdec("FB")){
 
-if(count($character) !== 5){
+if(count($character) != 5){
 
-Settings::throwException(4, 7);
+throw new KEFException(4, 7);
 
 }
 
@@ -80,9 +80,9 @@ $subtractor = hexdec("F8");
 
 } else if($c >= hexdec("FC") && $c <= hexdec("FD")){
 
-if(count($character) !== 6){
+if(count($character) != 6){
 	
-Settings::throwException(4, 7);
+throw new KEFException(4, 7);
 
 }
 
@@ -133,7 +133,7 @@ unset($temp_c);
 
 if(count($character_int) > 1){
 	
-Settings::throwException(4, 9, "Input can only be one character");
+throw new KEFException(4, 9, "Input can only be one character");
 
 }
 
@@ -143,7 +143,7 @@ return $character_int[0];
 	
 if($character < 0){
 	
-Settings::throwException(4, 9, "Parameter less than 0");
+throw new KEFException(4, 9, "Parameter less than 0");
 
 }
 

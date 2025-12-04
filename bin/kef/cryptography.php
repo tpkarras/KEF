@@ -1,70 +1,52 @@
 <?php
 namespace tpkarras\KEF;
 
-function encryptDataKEF($data, $passphrase, $cipher, $byte_range = 0, $aad = null, $output = null){
-
-if(!is_string($data)){
-	
-Settings::throwException(0, 9, "Parameter \"\$data\" is required to be of type \"string\"");
-
-}
-
-if(!is_string($passphrase)){
-	
-Settings::throwException(0, 9, "Parameter \"\$passphrase\" is required to be of type \"string\"");
-
-}
-
-if(!is_string($cipher)){
-	
-Settings::throwException(0, 9, "Parameter \"\$cipher\" is required to be of type \"string\"");
-
-}
-
-if(!is_int($byte_range)){
-	
-Settings::throwException(0, 9, "Parameter \"\$byte_range\" is required to be of type \"int\"");
-
-}
-
-if(!is_string($aad) && !is_null($aad)){
-	
-Settings::throwException(0, 9, "Parameter \"\$aad\" is required to be of type \"string/null\"");
-
-}
-
-if(!is_string($output) && !is_null($output)){
-	
-Settings::throwException(0, 9, "Parameter \"\$output\" is required to be of type \"string/null\"");
-
-}
+function encryptDataKEF(string $data, array $passphrase, string $cipher, int $byte_range = 0, int $multi_encrypt_split = 0, string|null $aad = null, string|null $output = null){
 
 if(empty($data) || empty($passphrase) || empty($cipher) || $byte_range < 0 || is_string($output) && empty($output)){
 	
-Settings::throwException(0, 4);
+throw new KEFException(0, 4);
 
 }
 
-if(version_compare(PHP_VERSION, "7.1.0") === -1 && preg_match("/gcm$|ccm$/", $cipher)){
+foreach($passphrase as $p){
+	
+if(!is_string($p)){
+	
+throw new KEFException(0, 9, "Passphrase in array is not a string");
 
-Settings::throwException(0, 0, "GCM/CCM not supported on PHP versions less than 7.1.0");
+}
+
+if(empty($p)){
+
+throw new KEFException(0, 9, "Passphrase cannot be empty");
+	
+}
+
+}
+
+if(!preg_match("/gcm$|ccm$/", $cipher)){
+
+throw new KEFException(0, 0, "Cipher is not GCM/CCM");
 
 }
 
 if(is_string($aad) && empty($aad)){
 	
-Settings::throwException(0, 4);
+throw new KEFException(0, 4);
 
 }
 
-if($byte_range !== 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
+if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
 	
-Settings::throwException(0, 1);
+throw new KEFException(0, 1);
 
 }
 
-if($byte_range === 0){
+if($byte_range == 0){
+
 $byte_range = Settings::DEFAULT_BYTE_RANGE;
+
 }
 
 $cipher_octet = CipherTools::convertCipher($cipher);
@@ -77,35 +59,37 @@ $excluded_characters = "/[\<\>\\\:\|\?\*]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|CO
 
 if(preg_match($excluded_characters, $output)){
 	
-Settings::throwException(0, 9, "Excluded characters found");
+throw new KEFException(0, 9, "Excluded characters found");
 
 }
 
 }
+
 foreach(str_split($output) as $v){
 	
 if(convertCharacter($v) <= 31){
 	
-Settings::throwException(0, 9, "Excluded characters found");
+throw new KEFException(0, 9, "Excluded characters found");
 
 }
 
 }
 
 if(strpos($output, "/") !== false && !is_dir(preg_replace("/\/[^\/]+$/", "", $output))){
-Settings::throwException(0, 9, "Not a directory");
+
+throw new KEFException(0, 9, "Not a directory");
 
 }
 
 if(is_file($output)){
 	
-Settings::throwException(0, 11);
+throw new KEFException(0, 11);
 
 }
 
 if(file_put_contents($output, "") === false){
 	
-Settings::throwException(0, 10);
+throw new KEFException(0, 10);
 
 }
 
@@ -157,9 +141,23 @@ $octet_array = array(array());
 
 $iv_l = CipherTools::supportsIV($cipher);
 
+if(count($passphrase) > 1){
+	
+$multi_encrypt_split_current = 1;
+
+if($multi_encrypt_split == 0){
+
+$multi_encrypt_split = Settings::DEFAULT_BYTE_MULTI_ENCRYPT_SPLIT;
+
+}
+
+}
+
+$current_passphrase = reset($passphrase);
+
 while($current_range < intval(ceil($total_length / $byte_range))){
 	
-if($iv_l === false){
+if(!$iv_l){
 	
 $iv = null;
 
@@ -180,20 +178,12 @@ $r = fread($data, $byte_range);
 $r = $data[$current_range];
 
 }
-
-if(version_compare(PHP_VERSION, "7.1.0") === -1){
 	
-$row = openssl_encrypt($r, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv);
+$row = openssl_encrypt($r, $cipher, $current_passphrase, OPENSSL_RAW_DATA, $iv, $tag, $aad);
 
-} else {
+if(is_bool($row) || is_null($row)){
 	
-$row = openssl_encrypt($r, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag, $aad);
-
-}
-
-if($row === false || $row === null){
-	
-Settings::throwException(2, 3);
+throw new KEFException(2, 3);
 
 }
 
@@ -203,7 +193,7 @@ array_unshift($octet_array[0], strlen($length));
 
 $row = $length.$row;
 
-if($iv  !== null){
+if(!is_null($iv)){
 	
 $length = convertCharacter(strlen($iv));
 
@@ -247,6 +237,21 @@ unset($row);
 
 $current_range++;
 
+$multi_encrypt_split_current++;
+
+if(count($passphrase) > 1 && $multi_encrypt_split_current == $multi_encrypt_split){
+
+$current_passphrase = next($passphrase);
+$multi_encrypt_split_current = 1;
+
+if(!$current_passphrase){
+	
+$current_passphrase = reset($passphrase);
+
+}
+	
+}
+
 }
 
 $content_type = str_split($content_type, 1);
@@ -265,7 +270,7 @@ $checksum[$k] = hexdec($v);
 
 }
 
-array_unshift($octet_array, $cipher_octet, $total_length, $byte_range, $content_type, $checksum);
+array_unshift($octet_array, $cipher_octet, $total_length, $byte_range, $multi_encrypt_split, $content_type, $checksum);
 
 $octets = "";
 $current_octet = "";
@@ -402,51 +407,27 @@ return $current_data;
 
 }
 
-function buffer($data, $buffer_size = 0, $level = 1, $return_info = false){
-	
-if(!is_string($data)){
-	
-Settings::throwException(2, 9, "Parameter \"\$data\" is required to be of type \"string\"");
-
-}
-
-if(!is_int($buffer_size)){
-	
-Settings::throwException(2, 9, "Parameter \"\$buffer_size\" is required to be of type \"int\"");
-
-}
-
-if(!is_int($level)){
-	
-Settings::throwException(2, 9, "Parameter \"\$level\" is required to be of type \"int\"");
-
-}
-
-if(!is_bool($return_info)){
-	
-Settings::throwException(2, 9, "Parameter \"\$return_info\" is required to be of type \"bool\"");
-
-}
+function buffer(string $data, int $buffer_size = 0, int $level = 1, bool $return_info = false){
 
 if(empty($data)){
 	
-Settings::throwException(2, 4);
+throw new KEFException(2, 4);
 
 }
 
 if($buffer_size < 0 || $level < 1){
 	
-Settings::throwException(2, 9, "Parameter(s) less than 0/1");
+throw new KEFException(2, 9, "Parameter(s) less than 0/1");
 
 }
 
 if($buffer_size > 0 && $buffer_size < Settings::DEFAULT_BUFFER_SIZE){
 	
-Settings::throwException(2, 9, "Less than default buffer size");
+throw new KEFException(2, 9, "Less than default buffer size");
 
 }
 
-if($buffer_size === 0){
+if($buffer_size == 0){
 	
 $buffer_size = Settings::DEFAULT_BUFFER_SIZE;
 
@@ -464,7 +445,7 @@ $ch = curl_init($data);
 
 curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$buffer_size * ($level - 1)."-".$buffer_size * $level - 1]);
 
-curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.0 (https://github.com/tpkarras)");
+curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.0 (https://github.com/tpkarras)");
 
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -484,14 +465,14 @@ curl_setopt($ch, CURLOPT_HEADERFUNCTION,
     	
     $header = explode(':', $header, 2);
     
-    if(count($header) === 2){
+    if(count($header) == 2){
     	
-    if(strtolower($header[0]) === "content-length" && is_null($total_length)){
+    if(strtolower($header[0]) == "content-length" && is_null($total_length)){
     	
 $total_length = intval(trim($header[1]));
 	}
 	
-    if(strtolower($header[0]) === "etag" && is_null($checksum)){
+    if(strtolower($header[0]) == "etag" && is_null($checksum)){
     	
 $checksum = str_replace("\"", "", trim($header[1]));
   
@@ -512,7 +493,7 @@ curl_close($ch);
 
 if(array_search($response_code, [200, 206]) === false){
 	
-Settings::throwException(2, 12);
+throw new KEFException(2, 12);
 
 }
 
@@ -530,7 +511,7 @@ $buffer = fread($data, $buffer_size);
 
 if($buffer === false){
 	
-Settings::throwException(2, 12);
+throw new KEFException(2, 12);
 
 }
 
@@ -540,9 +521,9 @@ return false;
 
 }
 
-if(strlen($buffer) === 0){
+if(strlen($buffer) == 0){
 	
-Settings::throwException(2, 9, "Buffer is not supposed to be empty");
+throw new KEFException(2, 9, "Buffer is not supposed to be empty");
 
 }
 
@@ -569,6 +550,7 @@ private $content_type = null;
 private $content_length = null;
 private $kef_length = null;
 private $byte_range = null;
+private $multi_encrypt_split = null;
 private $size_array = array();
 private $cipher = null;
 private $checksum_original = null;
@@ -583,7 +565,7 @@ return $this->content_type;
 
 public function getDecryptionInfo(){
 	
-if(empty($this->size_array) || is_null($this->byte_range) || is_null($this->cipher) || is_null($this->data_start)){
+if(empty($this->size_array) || is_null($this->byte_range) || is_null($this->multi_encrypt_split) || is_null($this->cipher) || is_null($this->data_start)){
 	
 return null;
 
@@ -593,20 +575,15 @@ $info = array();
 
 $info[0] = $this->cipher;
 $info[1] = $this->byte_range;
-$info[2] = $this->size_array;
-$info[3] = $this->data_start;
+$info[2] = $this->multi_encrypt_split;
+$info[3] = $this->size_array;
+$info[4] = $this->data_start;
 
 return $info;
 
 }
 
-public function getLength($type = false){
-
-if(!is_bool($type)){
-	
-Settings::throwException(5, 9, "Parameter \"\$type\" is required to be of type \"bool\"");
-
-}
+public function getLength(bool $type = false){
 
 if(!$type){
 	
@@ -620,12 +597,7 @@ return $this->kef_length;
 
 }
 
-public function getChecksum($type = false){
-if(!is_bool($type)){
-	
-Settings::throwException(5, 9, "Parameter \"\$type\" is required to be of type \"bool\"");
-
-}
+public function getChecksum(bool $type = false){
 
 if(!$type){
 	
@@ -641,43 +613,49 @@ return $this->checksum_kef;
 
 private function clearData(){
 	
-if($this->cipher !== null){
+if($this->cipher != null){
 	
 $this->cipher = null;
 
 }
 
-if($this->content_length !== null){
+if($this->content_length != null){
 	
 $this->content_length = null;
 
 }
 
-if($this->kef_length !== null){
+if($this->kef_length != null){
 	
 $this->kef_length = null;
 
 }
 
-if($this->checksum_original !== null){
+if($this->checksum_original != null){
 	
 $this->checksum_original = null;
 
 }
 
-if($this->checksum_kef !== null){
+if($this->checksum_kef != null){
 	
 $this->checksum_kef = null;
 
 }
 
-if($this->byte_range !== null){
+if($this->byte_range != null){
 	
 $this->byte_range = null;
 
 }
 
-if($this->content_type !== null){
+if($this->multi_encrypt_split != null){
+	
+$this->byte_range = null;
+
+}
+
+if($this->content_type != null){
 	
 $this->content_type = null;
 
@@ -691,7 +669,7 @@ $this->size_array = array();
 
 }
 
-private function importData($data){
+private function importData(string|array $data){
 	
 if(preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($data))){
 	
@@ -745,7 +723,7 @@ $number = hexdec(bin2hex(substr($data, $current_position, 1)));
 
 $current_position++;
 
-if(isset($is_buffer) && $current_position === $buffer_size){
+if(isset($is_buffer) && $current_position == $buffer_size){
 	
 $data_start = $current_position + $data_start;
 
@@ -757,7 +735,7 @@ $data = buffer($path, 0, $buffer_level);
 
 }
 
-if($number === 255){
+if($number == 255){
 	
 $size_array_element = $size_array_element + ($number >> 1) + 1;
 
@@ -765,7 +743,7 @@ $size_array_element = $size_array_element + ($number >> 1) + 1;
 	
 $size_array_element = $size_array_element + $number;
 
-if($octet_count === null){
+if(is_null($octet_count)){
 	
 $octet_count = $size_array_element;
 
@@ -779,31 +757,31 @@ continue;
 	
 $this->clearData();
 
-Settings::throwException(2, 8);
+throw new KEFException(2, 8);
 
 }
 
-if($octet_count !== null){
+if(!is_null($octet_count)){
 
-if($this->cipher === null && isset($cipher)){
+if(is_null($this->cipher) && isset($cipher)){
 	
 array_push($cipher, $size_array_element);
 
 $size_array_element = 0;
 
-} else if($this->content_length === null || $this->byte_range === null){
+} else if(is_null($this->content_length) || is_null($this->byte_range) || is_null($this->multi_encrypt_split)){
 	
 $octet_count--;
 
-} else if($this->content_type === null || $this->checksum_original === null){
+} else if(is_null($this->content_type) || is_null($this->checksum_original)){
 	
-if($this->content_type === null){
+if(is_null($this->content_type)){
 	
 $content_type .= convertCharacter($size_array_element);
 
 $size_array_element = 0;
 
-} else if($this->checksum_original === null){
+} else if(is_null($this->checksum_original)){
 	
 $octet_count--;
 
@@ -833,10 +811,10 @@ $size_array_element = 0;
 
 }
 
-if($this->cipher === null && count($cipher) === $octet_count){
+if(is_null($this->cipher) && count($cipher) == $octet_count){
 	
 try {
-	
+
 $this->cipher = CipherTools::convertCipher($cipher);
 
 } catch (Exception $e){
@@ -853,7 +831,7 @@ $octet_count = null;
 
 continue;
 
-} else if($this->content_length === null && $octet_count === 0){
+} else if(is_null($this->content_length) && $octet_count == 0){
 	
 $this->content_length = $size_array_element;
 $size_array_element = 0;
@@ -862,13 +840,14 @@ $octet_count = null;
 
 continue;
 
-} else if($this->byte_range === null && $octet_count === 0){
+} else if(is_null($this->byte_range) && $octet_count == 0){
 	
 if($size_array_element < Settings::MIN_BYTES || $size_array_element > Settings::MAX_BYTES){
 	
 $this->clearData();
 
-Settings::throwException(2, 1);
+throw new KEFException(2, 1);
+
 }
 
 $this->byte_range = $size_array_element;
@@ -879,7 +858,15 @@ $octet_count = null;
 
 continue;
 
-} else if($this->content_type === null && strlen($content_type) === $octet_count){
+} else if(is_null($this->multi_encrypt_split) && $octet_count == 0){
+	
+$this->multi_encrypt_split = $size_array_element;
+
+$size_array_element = 0;
+
+$octet_count = null;
+
+} else if(is_null($this->content_type) && strlen($content_type) == $octet_count){
 	
 $this->content_type = $content_type;
 
@@ -889,7 +876,7 @@ $octet_count = null;
 
 continue;
 
-} else if($this->checksum_original === null && $octet_count === 0){
+} else if(is_null($this->checksum_original) && $octet_count == 0){
 	
 $this->checksum_original = $checksum;
 unset($checksum);
@@ -898,7 +885,7 @@ $octet_count = null;
 
 continue;
 
-} else if(count($this->size_array) === $octet_count){
+} else if(count($this->size_array) == $octet_count){
 
 break;
 
@@ -924,13 +911,13 @@ public function __construct(string $data){
 	
 if(!is_string($data)){
 	
-Settings::throwException(0, 9, "Parameter \"\$data\" is required to be of type \"string\"");
+throw new KEFException(0, 9, "Parameter \"\$data\" is required to be of type \"string\"");
 
 }
 
 if(empty($data)){
 	
-Settings::throwException(0, 4);
+throw new KEFException(0, 4);
 
 }
 
@@ -940,82 +927,56 @@ $this->importData($data);
 
 }
 
-function decryptKEFData(KEFInfo $info, $data, $passphrase, $aad = null, $start = 0, $end = 0, $buffer_size = 0){
-	
-if(!is_string($data)){
-	
-Settings::throwException(1, 9, "Parameter \"\$data\" is required to be of type \"string\"");
-
-}
-
-if(!is_string($passphrase)){
-	
-Settings::throwException(1, 9, "Parameter \"\$passphrase\" is required to be of type \"string\"");
-
-}
-
-if(!is_string($aad) && !is_null($aad)){
-	
-Settings::throwException(1, 9, "Parameter \"\$aad\" is required to be of type \"string/null\"");
-
-}
-
-if(!is_int($start)){
-	
-Settings::throwException(1, 9, "Parameter \"\$start\" is required to be of type \"int\"");
-
-}
-
-if(!is_int($end)){
-	
-Settings::throwException(1, 9, "Parameter \"\$end\" is required to be of type \"int\"");
-
-}
-
-if(!is_int($buffer_size)){
-	
-Settings::throwException(1, 9, "Parameter \"\$end\" is required to be of type \"int\"");
-
-}
+function decryptKEFData(KEFInfo $info, string $data, array $passphrase, string|null $aad = null, int $start = 0, int $end = 0, int $buffer_size = 0){
 
 if(is_null($info->getContentType()) || is_null($info->getDecryptionInfo()) || is_null($info->getLength()) || is_null($info->getChecksum())){
 	
-Settings::throwException(1, 7, "KEFInfo is invalid");
-
-}
-
-if(version_compare(PHP_VERSION, "7.1.0") === -1 && preg_match("/gcm$|ccm$/", $info->getDecryptionInfo()[0])){
-
-Settings::throwException(1, 0, "GCM/CCM not supported on PHP versions less than 7.1.0");
+throw new KEFException(1, 7, "KEFInfo is invalid");
 
 }
 
 if(empty($data)){
 	
-Settings::throwException(1, 4);
+throw new KEFException(1, 4);
 
 }
 
 if(empty($passphrase)){
 	
-Settings::throwException(1, 4);
+throw new KEFException(1, 4);
+
+}
+
+foreach($passphrase as $p){
+	
+if(!is_string($p)){
+
+throw new KEFException(1, 9, "Passphrase in array is not a string");
+
+}
+
+if(empty($p)){
+
+throw new KEFException(1, 9, "Passphrase cannot be empty");
+
+}
 
 }
 
 if(is_string($aad) && empty($aad)){
 	
-Settings::throwException(1, 4);
+throw new KEFException(1, 4);
 
 }
 
 if(preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($data)) || is_file($data)){
 if($buffer_size > 0 && $buffer_size < Settings::DEFAULT_BUFFER_SIZE){
 	
-Settings::throwException(1, 9, "Less than default buffer size");
+throw new KEFException(1, 9, "Less than default buffer size");
 
 }
 
-if($buffer_size === 0){
+if($buffer_size == 0){
 	
 $buffer_size = Settings::DEFAULT_BUFFER_SIZE;
 
@@ -1027,9 +988,9 @@ $buffer_level = 1;
 
 $buffer = buffer($data, $buffer_size, $buffer_level, true);
 
-if(!hash_equals($info->getChecksum(true), $buffer[0]) || $buffer[1] !== $info->getLength(true)){
+if(!hash_equals($info->getChecksum(true), $buffer[0]) || $buffer[1] != $info->getLength(true)){
 	
-Settings::throwException(1, 13);
+throw new KEFException(1, 13);
 
 }
 
@@ -1038,16 +999,25 @@ unset($buffer);
 
 } else {
 	
-if(!hash_equals($info->getChecksum(true), md5($data)) || strlen($data) !== $info->getLength(true)){
+if(!hash_equals($info->getChecksum(true), md5($data)) || strlen($data) != $info->getLength(true)){
 	
-Settings::throwException(1, 13);
+throw new KEFException(1, 13);
+
 }
 
 }
 
 $decryption_info = $info->getDecryptionInfo();
 
-$current_position = $decryption_info[3];
+if($decryption_info[2] > 0 && count($passphrase) == 1){
+
+throw new KEFException(1, 9, "This file has been encrypted with multiple passphrases, only 1 passphrase is in array");
+	
+}
+
+$multi_encrypt_split = $decryption_info[2];
+
+$current_position = $decryption_info[4];
 
 if(isset($path)){
 	
@@ -1064,7 +1034,7 @@ $data = buffer($path, $buffer_size, $buffer_level);
 
 if($start < 0 || $end < 0 || $start >= $info->getLength() || $end > $info->getLength() - 1 || $end > 0 && $start >= $end){
 	
-Settings::throwException(1, 4);
+throw new KEFException(1, 4);
 
 }
 
@@ -1084,7 +1054,7 @@ $has_tag = true;
 
 }
 
-if($end === 0){
+if($end == 0){
 	
 $end = $info->getLength() - 1;
 
@@ -1198,11 +1168,19 @@ $current_length = null;
 $size_array_key = 0;
 $decrypted_data = "";
 
+if($multi_encrypt_split > 0){
+
+$multi_encrypt_split_current = 1;
+
+}
+
+$current_passphrase = reset($passphrase);
+
 while(true){
 
-if($current_length === null){
+if(is_null($current_length)){
 	
-$length = $decryption_info[2][$size_array_key];
+$length = $decryption_info[3][$size_array_key];
 
 } else {
 	
@@ -1224,7 +1202,7 @@ $current_position = $current_position + strlen($current_data);
 
 while($remaining > 0){
 
-if($current_position === $buffer_size){
+if($current_position == $buffer_size){
 	
 $current_position = 0;
 
@@ -1250,7 +1228,7 @@ unset($remainder);
 
 }
 
-if($current_length === null){
+if(is_null($current_length)){
 
 if(isset($remainder)){
 	
@@ -1272,9 +1250,9 @@ continue;
 
 }
 
-if($current_length !== null){
+if(!is_null($current_length)){
 
-if(strlen($current_data) !== $length){
+if(strlen($current_data) != $length){
 	
 $current_data = substr($data, $current_position, $length);
 
@@ -1296,7 +1274,7 @@ $end_trigger--;
 
 }
 
-if($start_trigger === 0){
+if($start_trigger == 0){
 
 if(!isset($current_tag)){
 
@@ -1331,7 +1309,7 @@ $current_iv = null;
 
 }
 
-if($current_tag !== null){
+if(!is_null($current_tag)){
 
 if(is_null($aad)){
 
@@ -1341,19 +1319,11 @@ $aad = "";
 
 }
 
-if(version_compare(PHP_VERSION, "7.1.0") === -1){
+$decrypted = openssl_decrypt($current_data, $decryption_info[0], $current_passphrase, OPENSSL_RAW_DATA, $current_iv, $current_tag, $aad);
+
+if(is_bool($decrypted) || is_null($decrypted)){
 	
-$decrypted = openssl_decrypt($current_data, $decryption_info[0], $passphrase, OPENSSL_RAW_DATA, $current_iv);
-
-} else {
-
-$decrypted = openssl_decrypt($current_data, $decryption_info[0], $passphrase, OPENSSL_RAW_DATA, $current_iv, $current_tag, $aad);
-
-}
-
-if($decrypted === false || $decrypted === null){
-	
-Settings::throwException(1, 3);
+throw new KEFException(1, 3);
 
 }
 if(isset($offset)){
@@ -1361,7 +1331,7 @@ if(isset($offset)){
 $decrypted_data .= substr($decrypted, $offset);
 unset($offset);
 
-} else if($end_trigger === 0 && isset($trim)){
+} else if($end_trigger == 0 && isset($trim)){
 	
 $decrypted_data .= substr($decrypted, 0, $trim);
 unset($trim);
@@ -1379,8 +1349,25 @@ unset($current_iv);
 
 $current_data = "";
 
-if(!isset($decryption_info[2][$size_array_key])){
+$multi_encrypt_split_current++;
+
+if($multi_encrypt_split > 0 && $multi_encrypt_split_current == $multi_encrypt_split){
+
+$current_passphrase = next($passphrase);
+$multi_encrypt_split_current = 1;
+
+if(!$current_passphrase){
+	
+$current_passphrase = reset($passphrase);
+
+}
+	
+}
+
+if(!isset($decryption_info[3][$size_array_key])){
+
 break;
+
 }
 
 continue;
@@ -1391,9 +1378,9 @@ continue;
 
 }
 
-if($start === 0 && $end +1 === $info->getLength() && (strlen($decrypted_data) !== $info->getLength() || !hash_equals($info->getChecksum(), md5($decrypted_data)))){
+if($start == 0 && $end +1 == $info->getLength() && (strlen($decrypted_data) != $info->getLength() || !hash_equals($info->getChecksum(), md5($decrypted_data)))){
 	
-Settings::throwException(1, 13);
+throw new KEFException(1, 13);
 
 }
 
