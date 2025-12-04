@@ -237,9 +237,11 @@ unset($row);
 
 $current_range++;
 
+if(count($passphrase) > 1){
+
 $multi_encrypt_split_current++;
 
-if(count($passphrase) > 1 && $multi_encrypt_split_current == $multi_encrypt_split){
+if($multi_encrypt_split_current == $multi_encrypt_split){
 
 $current_passphrase = next($passphrase);
 $multi_encrypt_split_current = 1;
@@ -250,6 +252,8 @@ $current_passphrase = reset($passphrase);
 
 }
 	
+}
+
 }
 
 }
@@ -1349,9 +1353,11 @@ unset($current_iv);
 
 $current_data = "";
 
+if($multi_encrypt_split > 0){
+
 $multi_encrypt_split_current++;
 
-if($multi_encrypt_split > 0 && $multi_encrypt_split_current == $multi_encrypt_split){
+if($multi_encrypt_split_current == $multi_encrypt_split){
 
 $current_passphrase = next($passphrase);
 $multi_encrypt_split_current = 1;
@@ -1378,6 +1384,8 @@ continue;
 
 }
 
+}
+
 if($start == 0 && $end +1 == $info->getLength() && (strlen($decrypted_data) != $info->getLength() || !hash_equals($info->getChecksum(), md5($decrypted_data)))){
 	
 throw new KEFException(1, 13);
@@ -1387,4 +1395,5 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
