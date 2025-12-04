@@ -143,7 +143,7 @@ $iv_l = CipherTools::supportsIV($cipher);
 
 if(count($passphrase) > 1){
 	
-$multi_encrypt_split_current = 1;
+$multi_encrypt_split_current = 0;
 
 if($multi_encrypt_split == 0){
 
@@ -244,7 +244,7 @@ $multi_encrypt_split_current++;
 if($multi_encrypt_split_current == $multi_encrypt_split){
 
 $current_passphrase = next($passphrase);
-$multi_encrypt_split_current = 1;
+$multi_encrypt_split_current = 0;
 
 if($current_passphrase === false){
 	
@@ -1174,7 +1174,7 @@ $decrypted_data = "";
 
 if($multi_encrypt_split > 0){
 
-$multi_encrypt_split_current = 1;
+$multi_encrypt_split_current = 0;
 
 }
 
@@ -1360,7 +1360,7 @@ $multi_encrypt_split_current++;
 if($multi_encrypt_split_current == $multi_encrypt_split){
 
 $current_passphrase = next($passphrase);
-$multi_encrypt_split_current = 1;
+$multi_encrypt_split_current = 0;
 
 if($current_passphrase === false){
 	
@@ -1395,6 +1395,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
