@@ -139,13 +139,7 @@ return $cipher;
 
 }
 
-public static function supportsIV($cipher){
-
-if(!is_string($cipher) && !is_array($cipher)){
-	
-throw new KEFException(4, 9, "Parameter \"\$cipher\" is required to be of type \"string/array\"");
-
-}
+public static function supportsIV(string|array $cipher){
 
 if(empty($cipher)){
 	
@@ -180,3 +174,4 @@ return $iv;
 }
 
 }
+
