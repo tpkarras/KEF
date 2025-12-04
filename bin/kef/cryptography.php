@@ -3,7 +3,7 @@ namespace tpkarras\KEF;
 
 function encryptDataKEF(string $data, array $passphrase, string $cipher, int $byte_range = 0, int $multi_encrypt_split = 0, string|null $aad = null, string|null $output = null){
 
-if(empty($data) || empty($passphrase) || empty($cipher) || $byte_range < 0 || is_string($output) && empty($output)){
+if(empty($data) || empty($passphrase) || empty($cipher) || $byte_range < 0 || $multi_encrypt_split < 0 || is_string($output) && empty($output)){
 	
 throw new KEFException(0, 4);
 
@@ -37,7 +37,7 @@ throw new KEFException(0, 4);
 
 }
 
-if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES) || $multi_encrypt_split < 0){
+if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
 	
 throw new KEFException(0, 1);
 
@@ -1395,5 +1395,6 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
