@@ -37,7 +37,7 @@ throw new KEFException(0, 4);
 
 }
 
-if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
+if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES) || $multi_encrypt_split < 0){
 	
 throw new KEFException(0, 1);
 
@@ -1387,3 +1387,4 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
