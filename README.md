@@ -22,7 +22,7 @@ Otherwise you can extract the files from the "bin" directory and place them anyw
 
 ## Minimum Requirements
 
-KEF requires a PHP version greater than 7.4.0.
+KEF requires a PHP version greater than or equal to 7.4.0.
 
 Memory size is dependent on the buffer size set and the size of the data fed to the encryption function, you can experiment with the "memory_limit" directive found in "php.ini" in order to find the right memory size for your usage needs.
 
