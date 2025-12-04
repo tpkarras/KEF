@@ -151,7 +151,7 @@ $multi_encrypt_split = Settings::DEFAULT_BYTE_MULTI_ENCRYPT_SPLIT;
 
 } 
 
-if ($multi_encrypt_split > intval(ceil($total_length / $byte_range) - 1)){
+if ($multi_encrypt_split > intval(ceil(($total_length / $byte_range) / count($passphrase)))){
 
 throw new KEFException(0, 9, "Multi-encrypt split exceeds maximum number of ranges.");
 
@@ -1401,6 +1401,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
