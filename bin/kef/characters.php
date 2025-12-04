@@ -1,13 +1,7 @@
 <?php
 namespace tpkarras\KEF;
 
-function convertCharacter($character){
-
-if(!is_string($character) && !is_int($character)){
-
-throw new KEFException(4, 9, "Parameter \"\$character\" is required to be of type \"int/string\"");
-
-}
+function convertCharacter(string|int $character){
 
 if(is_string($character)){
 
@@ -220,3 +214,4 @@ return hex2bin($temp_c);
 }
 
 }
+
