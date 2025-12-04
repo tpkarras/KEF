@@ -246,7 +246,7 @@ if($multi_encrypt_split_current == $multi_encrypt_split){
 $current_passphrase = next($passphrase);
 $multi_encrypt_split_current = 1;
 
-if(!$current_passphrase){
+if($current_passphrase === false){
 	
 $current_passphrase = reset($passphrase);
 
@@ -1362,7 +1362,7 @@ if($multi_encrypt_split_current == $multi_encrypt_split){
 $current_passphrase = next($passphrase);
 $multi_encrypt_split_current = 1;
 
-if(!$current_passphrase){
+if($current_passphrase === false){
 	
 $current_passphrase = reset($passphrase);
 
@@ -1395,6 +1395,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
