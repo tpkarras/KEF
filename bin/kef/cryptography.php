@@ -1209,7 +1209,11 @@ $multi_encrypt_split_current = 0;
 
 }
 
+if(!isset($current_passphrase)){
+
 $current_passphrase = reset($passphrase);
+
+}
 
 while(true){
 
@@ -1426,6 +1430,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
