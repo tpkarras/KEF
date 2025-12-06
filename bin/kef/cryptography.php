@@ -1109,6 +1109,8 @@ $current_passphrase = reset($passphrase);
 	
 }
 
+}
+
 if($has_iv){
 	
 $trigger++;
@@ -1430,6 +1432,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
