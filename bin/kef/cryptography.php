@@ -151,7 +151,7 @@ $multi_encrypt_split = Settings::DEFAULT_BYTE_MULTI_ENCRYPT_SPLIT;
 
 } 
 
-if ($multi_encrypt_split > intval(floor(($total_length / $byte_range) / count($passphrase)))){
+if ($multi_encrypt_split > intval(floor(ceil($total_length / $byte_range) / count($passphrase)))){
 
 throw new KEFException(0, 9, "Multi-encrypt split exceeds maximum number of ranges.");
 
@@ -1084,6 +1084,31 @@ if($offset > $decryption_info[1]){
 	
 $trigger++;
 
+if($multi_encrypt_split > 0){
+
+if(!isset($multi_encrypt_split_current)){
+
+$multi_encrypt_split_current = 1;
+
+} else {
+
+$multi_encrypt_split_current++;
+
+}
+
+if($multi_encrypt_split_current == $multi_encrypt_split){
+
+$current_passphrase = next($passphrase);
+$multi_encrypt_split_current = 0;
+
+if($current_passphrase === false){
+	
+$current_passphrase = reset($passphrase);
+
+}
+	
+}
+
 if($has_iv){
 	
 $trigger++;
@@ -1178,7 +1203,7 @@ $current_length = null;
 $size_array_key = 0;
 $decrypted_data = "";
 
-if($multi_encrypt_split > 0){
+if($multi_encrypt_split > 0 && !isset($multi_encrypt_split_current)){
 
 $multi_encrypt_split_current = 0;
 
@@ -1401,6 +1426,7 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 
 
