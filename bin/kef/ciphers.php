@@ -3,6 +3,7 @@ namespace tpkarras\KEF;
 
 class CipherTools {
 
+//Convert between cipher formats
 public static function convertCipher(string|array $cipher){
 
 $cipher_methods = ["aes", "aria", "camellia", "chacha20", "des", "des3", "sm4"];
@@ -139,6 +140,7 @@ return $cipher;
 
 }
 
+//Check if cipher supports IV
 public static function supportsIV(string|array $cipher){
 
 if(empty($cipher)){
