@@ -1178,8 +1178,6 @@ $trigger++;
 
 }
 
-$trigger++;
-
 }
 
 $end_trigger = $trigger - $start_trigger;
@@ -1462,5 +1460,6 @@ throw new KEFException(1, 13);
 return $decrypted_data;
 
 }
+
 
 }
