@@ -1099,8 +1099,6 @@ $offset = $start;
 
 if($offset >= $this->byte_range){
 
-var_dump($offset);
-
 while($offset >= $this->byte_range){
 	
 $offset = $offset - $this->byte_range;
@@ -1469,4 +1467,5 @@ return $decrypted_data;
 
 
 }
+
 
