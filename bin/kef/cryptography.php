@@ -1099,6 +1099,8 @@ $offset = $start;
 
 if($offset >= $this->byte_range){
 
+var_dump($offset);
+
 while($offset >= $this->byte_range){
 	
 $offset = $offset - $this->byte_range;
@@ -1151,12 +1153,10 @@ $trigger++;
 }
 
 $start_trigger = $trigger;
-
 $trigger = 0;
-
 $trim = $end + 1;
 
-if($trim > $this->byte_range){
+if($end - $start > $this->byte_range){
 
 while($trim > $this->byte_range){
 
@@ -1181,6 +1181,12 @@ $trigger++;
 }
 
 $end_trigger = $trigger - $start_trigger;
+
+while($end_trigger < 0){
+
+$end_trigger++;
+
+}
 
 unset($trigger);
 
@@ -1463,3 +1469,4 @@ return $decrypted_data;
 
 
 }
+
