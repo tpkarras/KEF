@@ -1147,7 +1147,11 @@ $offset = $start;
 
 	}
 
-	$trigger++;
+		if($has_tag || $has_iv){
+
+		$trigger++;
+
+		}
 
 	}
 
@@ -1467,3 +1471,4 @@ return $decrypted_data;
 }
 
 }
+
