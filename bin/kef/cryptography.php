@@ -1058,7 +1058,7 @@ $data = $this->buffer($buffer_level);
 
 	}
 
-	if($start >= $this->content_length - 1 || $end > $this->content_length - 1){
+	if($start > $this->content_length - 1 || $end > $this->content_length - 1){
 	
 	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" greater than original byte range");
 
