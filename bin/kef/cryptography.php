@@ -988,7 +988,7 @@ $this->importData($data);
 }
 
 //Decryption function
-public function decrypt(array $passphrase, string|null $aad = null, int $start = 0, int $end = 0){
+public function decrypt(array $passphrase, string|null $aad = null, int $start = 0, int $end = -1){
 
 	if(empty($passphrase)){
 	
@@ -1052,7 +1052,7 @@ $data = $this->buffer($buffer_level);
 
 //Check if valid range
 
-	if($start < 0 || $end < 0){
+	if($start < 0 || $end < -1){
 	
 	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" cannot be less than 0");
 
@@ -1064,7 +1064,7 @@ $data = $this->buffer($buffer_level);
 
 	}
 
-	if($end > 0 && ($start >= $end || $end <= $start)){
+	if($end > -1 && ($start > $end || $end < $start)){
 
 	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" has invalid range");
 
@@ -1088,7 +1088,7 @@ $has_tag = false;
 
 //Set up triggers
 
-	if($end == 0){
+	if($end == -1){
 	
 	$end = $this->content_length - 1;
 
