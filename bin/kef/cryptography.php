@@ -1441,16 +1441,16 @@ $remaining = $this->buffer_size - $current_position;
 	
 				}
 
+			}
+
 //Finally
-				if($end_trigger == 0 || !isset($this->size_array[$size_array_key])){
+			if($end_trigger == 0 || !isset($this->size_array[$size_array_key])){
 
-				break;
-
-				}
-
-			continue;
+			break;
 
 			}
+
+			continue;
 
 		}
 
