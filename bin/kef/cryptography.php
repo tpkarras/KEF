@@ -1460,7 +1460,7 @@ $remaining = $this->buffer_size - $current_position;
 
 unset($started);
 
-	if($start == 0 && $end +1 == $this->content_length && (strlen($decrypted_data) != $this->content_length || !hash_equals($this->checksum_original, md5($decrypted_data)))){
+	if($start == 0 && $end + 1 == $this->content_length && (strlen($decrypted_data) != $this->content_length || !hash_equals($this->checksum_original, md5($decrypted_data)))){
 	
 	throw new KEFException(1, 13);
 
