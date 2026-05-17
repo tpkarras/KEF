@@ -500,7 +500,7 @@ private function buffer(int $level = 1){
 
 	curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$this->buffer_size * ($level - 1)."-".$this->buffer_size * $level - 1]);
 
-	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25 (https://github.com/tpkarras)");
+	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25.1 (https://github.com/tpkarras)");
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
