@@ -209,8 +209,16 @@ return $character_int[0];
 
 	$temp_c .= dechex(hexdec("80") + ($character % pow(2, 6)));
 
-	return hex2bin($temp_c);
+		if(mb_strlen($temp_c) != 1){
 
+		return null;
+
+		} else {
+
+		return hex2bin($temp_c);
+
+		}
+	
 	}
 
 }
