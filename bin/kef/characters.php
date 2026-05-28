@@ -203,9 +203,9 @@ return $character_int[0];
 
 		}
 
-		$multiplier--;
+	$multiplier--;
 
-		}
+	}
 
 	$temp_c .= dechex(hexdec("80") + ($character % pow(2, 6)));
 
