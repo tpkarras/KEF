@@ -209,7 +209,7 @@ return $character_int[0];
 
 	$temp_c .= dechex(hexdec("80") + ($character % pow(2, 6)));
 
-		if(mb_strlen(hex2bin($temp_c)) != 1){
+		if(mb_strlen(hex2bin($temp_c), "UTF-8") != 1){
 
 		return null;
 
