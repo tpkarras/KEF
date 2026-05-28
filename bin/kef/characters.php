@@ -209,15 +209,7 @@ return $character_int[0];
 
 	$temp_c .= dechex(hexdec("80") + ($character % pow(2, 6)));
 
-		if(strlen(hex2bin($temp_c)) > 4){
-
-		return null;
-
-		} else {
-
-		return hex2bin($temp_c);
-
-		}
+	return hex2bin($temp_c);
 	
 	}
 
