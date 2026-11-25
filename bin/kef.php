@@ -1,6 +1,6 @@
 <?php
 /*
-KEF v1.5.25 by tpkarras (https://github.com/tpkarras/KEF)
+KEF v1.5.25.2 by tpkarras (https://github.com/tpkarras/KEF)
 This code is licensed under the GNU General Public License v3.0
 */
 

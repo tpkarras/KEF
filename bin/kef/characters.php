@@ -1,5 +1,5 @@
 <?php
-namespace tpkarras\KEF;
+namespace tpkarras\KEF\Tools;
 
 function convertCharacter(string|int $character){
 
@@ -7,7 +7,7 @@ if(is_string($character)){
 
 	if(empty($character)){
 
-	throw new KEFException(4, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 		
 	}
 
@@ -34,7 +34,7 @@ $c = hexdec($c);
 	
 				if(count($character) != 2){
 	
-				throw new KEFException(4, 7);
+				throw new \tpkarras\KEF\Exceptions\MalformedDataError();
 
 				}
 
@@ -45,7 +45,7 @@ $c = hexdec($c);
 	
 				if(count($character) != 3){
 	
-				throw new KEFException(4, 7);
+				throw new \tpkarras\KEF\Exceptions\MalformedDataError();
 
 				}
 
@@ -56,7 +56,7 @@ $c = hexdec($c);
 	
 				if(count($character) != 4){
 
-				throw new KEFException(4, 7);
+				throw new \tpkarras\KEF\Exceptions\MalformedDataError();
 
 				}
 
@@ -67,7 +67,7 @@ $c = hexdec($c);
 
 				if(count($character) != 5){
 
-				throw new KEFException(4, 7);
+				throw new \tpkarras\KEF\Exceptions\MalformedDataError();
 
 				}
 
@@ -78,7 +78,7 @@ $c = hexdec($c);
 
 				if(count($character) != 6){
 	
-				throw new KEFException(4, 7);
+				throw new \tpkarras\KEF\Exceptions\MalformedDataError();
 
 				}
 
@@ -129,7 +129,7 @@ $c = hexdec($c);
 
 	if(count($character_int) > 1){
 	
-	throw new KEFException(4, 9, "Input can only be one character");
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Input can only be one character");
 
 	}
 
@@ -139,7 +139,7 @@ return $character_int[0];
 	
 	if($character < 0){
 	
-	throw new KEFException(4, 9, "Parameter less than 0");
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Parameter less than 0");
 
 	}
 

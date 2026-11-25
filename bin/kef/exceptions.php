@@ -1,192 +1,151 @@
 <?php
 
-namespace tpkarras\KEF;
+namespace tpkarras\KEF\Exceptions;
 
-class KEFException extends \Exception {
+class NotSupportedError extends \Exception {
 	
-public function __construct(int $job, int $exception, string|null $additional = null, Throwable|null $previous = null) {
+public function __construct() {
 
-	if($job < 0 || $exception < 0){
+$message = "Operation is not supported.";
+
+parent::__construct($message, 0, null);
+
+}
 	
-	throw new \Exception("Error throwing exception: Parameters cannot be less than 0");
+}
 
-	}
+class MissingRequiredParametersError extends \Exception {
 
-	if(!is_null($additional) && empty($additional)){
+public function __construct() {
+
+$message = "Required parameters are missing";
+
+parent::__construct($message, 1, null);
+
+}
 	
-	throw new \Exception("Error throwing exception: Additional message cannot be empty");
+}
 
-	}
-
-switch($job){
+class MalformedDataError extends \Exception {
 	
-	case 0:
+public function __construct() {
 
-	$job = "Error encrypting";
-	$check = [0, 1, 2, 3, 4, 5, 9, 10, 11];
+$message = "Data is malformed";
 
-	break;
-
-	case 1:
-
-	$job = "Error decrypting";
-	$check = [0, 3, 4, 7, 9, 13];
-
-	break;
-
-	case 2:
-
-	$job = "Error loading data";
-	$check = [1, 4, 5, 6, 8, 9, 12];
-
-	break;
-
-	case 3:
-
-	$job = "Error setting";
-	$check = [0, 4, 6, 9];
-
-	break;
-
-	case 4:
-
-	$job = "Error checking/converting";
-	$check = [0, 4, 5, 7, 9];
-
-	break;
-
-	case 5:
-
-	$job = "Error retrieving";
-	$check = [9];
+parent::__construct($message, 0, null);
 
 }
 
-	if(!is_string($job)){
+}
+
+class InvalidValueError extends \Exception {
 	
-	$message = "Error throwing exception: Job not found";
+public function __construct(string $additional) {
 
-	}
+$message = "Invalid value";
 
-	if(array_search($exception, $check) === false){
+	if(!empty($additional)){
 	
-	$message = "Error throwing exception: Job does not support message";
-
-	}
-
-	if(!isset($message)){
-
-	unset($check);
-
-	$code = 0;
-
-	switch($exception){
-	
-		case 0:
-
-		$exception = "Unsupported";
-		$code = 1;
-
-		break;
-
-		case 1:
-
-		$exception = "Not within range";
-		$code = 1;
-
-		break;
-
-		case 2:
-
-		$exception = "Missing Passphrase";
-		$code = 1;
-
-		break;
-
-		case 3:
-
-		$exception = "OpenSSL function returned false";
-		$code = 1;
-
-		break;
-
-		case 4:
+	$message .= " (".$additional.")";
 		
-		$exception = "Cannot be empty";
-		break;
-
-		case 5:
-
-		$exception = "Not found";
-		break;
-
-		case 6:
-
-		$exception = "Already set";
-		$code = 1;
-
-		break;
-
-		case 7:
-
-		$exception = "Malformed data";
-		$code = 1;
-
-		break;
-
-		case 8:
-
-		$exception = "Not KEF";
-		break;
-
-		case 9:
-
-		$exception = "Does not conform";
-		$code = 1;
-
-		break;
-
-		case 10:
-
-		$exception = "Not writable";
-		$code = 1;
-
-		break;
-
-		case 11:
-
-		$exception = "File exists";
-		$code = 1;
-
-		break;
-
-		case 12:
-
-		$exception = "Buffer update failed";
-		$code = 1;
-
-		break;
-
-		case 13:
-
-		$exception = "Does not match";
-		$code = 1;
-
 	}
 
-		if(!is_null($additional)){
-	
-		$exception .= " (".$additional.")";
-
-		}
-
-	$message = $job.": ".$exception;
-
-	}
-
-parent::__construct($message, $code, $previous);
+parent::__construct($message, 1, null);
 
 }
 
+}
+
+class FileError extends \Exception {
+
+public function __construct(int $message) {
+
+switch($message){
+
+case 0:
+
+$message = "File exists";
+break;
+
+case 1:
+
+$message = "Not writable";
+break;
+
+case 2:
+
+$message = "Buffer update failed";
+break;
+
+case 3:
+
+$message = "Not a KEF file";
+break;
+
+}
+
+parent::__construct($message, 0, null);
+
+}
+	
+}
+
+class OpenSSLError extends \Exception {
+
+public function __construct(int $message) {
+
+$message = "OpenSSL function has returned false";
+
+parent::__construct($message, 0, null);
+
+}
+	
+}
+
+class ContentsCannotBeEmptyError extends \Exception {
+
+public function __construct() {
+
+$message = "Contents cannot be empty";
+
+parent::__construct($message, 1, null);
+
+}
+
+}
+
+class NotFoundError extends \Exception {
+
+public function __construct() {
+
+$message = "Match was not found";
+
+parent::__construct($message, 1, null);
+
+}
+
+}
+
+class AlreadySetError extends \Exception {
+
+public function __construct() {
+
+$message = "Value is already set";
+
+parent::__construct($message, 2, null);
+
+}
+
+}
+
+class NotSetError extends \Exception {
+
+public function __construct() {
+
+$message = "Value is empty/not set";
+
+parent::__construct($message, 2, null);
+
+}
 
 }

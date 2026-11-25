@@ -1,10 +1,8 @@
 <?php
-namespace tpkarras\KEF;
-
-class CipherTools {
+namespace tpkarras\KEF\Tools;
 
 //Convert between cipher formats
-public static function convertCipher(string|array $cipher){
+function convertCipher(string|array $cipher){
 
 $cipher_methods = ["aes", "aria", "camellia", "chacha20", "des", "des3", "sm4"];
 
@@ -33,7 +31,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 	if(empty($cipher)){
 
-	throw new KEFException(4, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
@@ -41,7 +39,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 		if(array_search($cipher, openssl_get_cipher_methods()) === false){
 
-		throw new KEFException(4, 5);
+		throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 		}
 
@@ -55,7 +53,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 			if($v === false){
 	
-			throw new KEFException(4, 5);
+			throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 			}
 
@@ -69,7 +67,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 				if(array_search(reset($cipher), $v2["compatible"]) === false){
 
-				throw new KEFException(4, 5);
+				throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 				}
 
@@ -92,7 +90,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 		if(!is_int($v)){
 
-		throw new KEFException(4, 9);
+		throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 		}
 
@@ -100,7 +98,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 				if(!isset($cipher_methods[$v])){
 
-				throw new KEFException(4, 5);
+				throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 				}
 
@@ -111,13 +109,13 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 		if(!isset($cipher_options[$v])){
 
-		throw new KEFException(4, 5);
+		throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 		}
 
 		if(array_search($method, $cipher_options[$v]["compatible"]) === false){
 
-		throw new KEFException(4, 0);
+		throw new \tpkarras\KEF\Exceptions\NotSupportedError();
 
 		}
 
@@ -131,7 +129,7 @@ $cipher_options = [["string" => "128", "compatible" => [0, 1, 2]],
 
 		if(array_search($cipher, openssl_get_cipher_methods()) === false){
 
-		throw new KEFException(4, 5);
+		throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 		}
 
@@ -142,23 +140,23 @@ return $cipher;
 }
 
 //Check if cipher supports IV
-public static function supportsIV(string|array $cipher){
+function supportsIV(string|array $cipher){
 
 	if(empty($cipher)){
 	
-	throw new KEFException(4, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
 	if(is_array($cipher)){
 	
-	$cipher = self::cipherConvert($cipher);
+	$cipher = cipherConvert($cipher);
 
 	}
 
 	if(array_search($cipher, openssl_get_cipher_methods()) === false){
 	
-	throw new KEFException(4, 5);
+	throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 	}
 
@@ -173,7 +171,5 @@ $iv = @openssl_cipher_iv_length($cipher);
 	return $iv;
 
 	}
-
-}
 
 }

@@ -6,7 +6,7 @@ function encryptData(string $data, array $passphrase, string $cipher, int $byte_
 
 	if(empty($data) || empty($passphrase) || empty($cipher) || $byte_range < 0 || $multi_encrypt_split < 0 || is_string($output) && empty($output)){
 	
-	throw new KEFException(0, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
@@ -14,14 +14,14 @@ function encryptData(string $data, array $passphrase, string $cipher, int $byte_
 foreach($passphrase as $p){
 	
 	if(!is_string($p)){
-	
-	throw new KEFException(0, 9, "Passphrase in array is not a string");
+		
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Passphrase in array is not a string");
 
 	}
 
 	if(empty($p)){
 
-	throw new KEFException(0, 9, "Passphrase cannot be empty");
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Passphrase cannot be empty");
 	
 	}
 
@@ -30,33 +30,33 @@ foreach($passphrase as $p){
 //Check for GCM/CCM mode
 	if(!preg_match("/gcm$|ccm$/", $cipher)){
 
-	throw new KEFException(0, 0, "Cipher is not GCM/CCM");
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Cipher is not GCM/CCM");
 
 	}
 
 //Check if optional AAD string is empty
 	if(is_string($aad) && empty($aad)){
 	
-	throw new KEFException(0, 4);
+	throw new \tpkarras\KEF\Exceptions\ContentsCannotBeEmptyError();
 
 	}
 
 //Check if byte range is within the MIN/MAX range
-	if($byte_range != 0 && ($byte_range < Settings::MIN_BYTES || $byte_range > Settings::MAX_BYTES)){
+	if($byte_range != 0 && ($byte_range < \tpkarras\KEF\Settings\MIN_BYTES || $byte_range > \tpkarras\KEF\Settings\MAX_BYTES)){
 	
-	throw new KEFException(0, 1);
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Byte range is not within range");
 
 	}
 
 //If byte range is 0, set default byte range parameter
 	if($byte_range == 0){
 
-	$byte_range = Settings::DEFAULT_BYTE_RANGE;
+	$byte_range = \tpkarras\KEF\Settings\DEFAULT_BYTE_RANGE;
 
 	}
 
 //Convert cipher to array for header insertion
-$cipher_octet = CipherTools::convertCipher($cipher);
+$cipher_octet = \tpkarras\KEF\Tools\convertCipher($cipher);
 
 //Check optional output path for forbidden characters, check if file exists and check if writable
 	if(!empty($output)){
@@ -66,38 +66,44 @@ $cipher_octet = CipherTools::convertCipher($cipher);
 		$excluded_characters = "/[\<\>\\\:\|\?\*]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9/";
 
 			if(preg_match($excluded_characters, $output)){
-	
-			throw new KEFException(0, 9, "Excluded characters found");
+				
+			throw new \tpkarras\KEF\Exceptions\InvalidValueError("Excluded characters found");
 
 			}
+			
+		$slash = "\\";
 
+		} else {
+			
+		$slash = "/";
+		
 		}
 
 	foreach(str_split($output) as $v){
 	
-		if(convertCharacter($v) <= 31){
-	
-		throw new KEFException(0, 9, "Excluded characters found");
+		if(\tpkarras\KEF\Tools\convertCharacter($v) <= 31){
+
+		throw new \tpkarras\KEF\Exceptions\InvalidValueError("Excluded characters found");
 
 		}
 
 	}
 
-	if(strpos($output, "/") !== false && !is_dir(preg_replace("/\/[^\/]+$/", "", $output))){
+	if(strpos($output, $slash) !== false && !is_dir(preg_replace("/".preg_quote($slash)."[^".preg_quote($slash)."]+$/", "", $output))){
 
-	throw new KEFException(0, 9, "Not a directory");
-
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Not a directory");
+	
 	}
 
 	if(is_file($output)){
 	
-	throw new KEFException(0, 11);
+	throw new \tpkarras\KEF\Exceptions\FileError(0);
 
 	}
 
 	if(file_put_contents($output, "") === false){
 	
-	throw new KEFException(0, 10);
+	throw new \tpkarras\KEF\Exceptions\FileError(1);
 
 	}
 
@@ -150,7 +156,7 @@ $current_range = 0;
 $octet_array = array(array());
 
 //Check if cipher supports IV
-$iv_l = CipherTools::supportsIV($cipher);
+$iv_l = \tpkarras\KEF\Tools\supportsIV($cipher);
 
 //For more than one passphrase
 	if(count($passphrase) > 1){
@@ -160,14 +166,14 @@ $iv_l = CipherTools::supportsIV($cipher);
 //Set default multi-encrypt split parameter if 0
 		if($multi_encrypt_split == 0){
 
-		$multi_encrypt_split = Settings::DEFAULT_BYTE_MULTI_ENCRYPT_SPLIT;
+		$multi_encrypt_split = \tpkarras\KEF\Settings\DEFAULT_BYTE_MULTI_ENCRYPT_SPLIT;
 
 		} 
 
 //Check if multi-encrypt split not greater than maximum number of ranges
 		if ($multi_encrypt_split > intval(floor(ceil($total_length / $byte_range) / count($passphrase)))){
 
-		throw new KEFException(0, 9, "Multi-encrypt split exceeds maximum number of ranges.");
+		throw new \tpkarras\KEF\Exceptions\InvalidValueError("Multi-encrypt split exceeds maximum number of ranges.");
 
 		}
 
@@ -209,12 +215,12 @@ $row = openssl_encrypt($r, $cipher, $current_passphrase, OPENSSL_RAW_DATA, $iv, 
 
 	if(is_bool($row) || is_null($row)){
 	
-	throw new KEFException(2, 3);
+	throw new \tpkarras\KEF\Exceptions\OpenSSLError();
 
 	}
 
 //Insert length characters
-$length = convertCharacter(strlen($row));
+$length = \tpkarras\KEF\Tools\convertCharacter(strlen($row));
 
 array_unshift($octet_array[0], strlen($length));
 
@@ -222,7 +228,7 @@ $row = $length.$row;
 
 	if(!is_null($iv)){
 	
-	$length = convertCharacter(strlen($iv));
+	$length = \tpkarras\KEF\Tools\convertCharacter(strlen($iv));
 
 	array_unshift($octet_array[0], strlen($length));
 
@@ -232,7 +238,7 @@ $row = $length.$row;
 
 	if(preg_match("/gcm|ccm/", $cipher)){
 	
-	$length = convertCharacter(strlen($tag));
+	$length = \tpkarras\KEF\Tools\convertCharacter(strlen($tag));
 
 	array_unshift($octet_array[0], strlen($length));
 
@@ -295,7 +301,7 @@ $content_type = str_split($content_type, 1);
 
 foreach($content_type as $k => $v){
 	
-$content_type[$k] = convertCharacter($v);
+$content_type[$k] = \tpkarras\KEF\Tools\convertCharacter($v);
 
 }
 
@@ -463,14 +469,16 @@ private $checksum_original = null;
 private $checksum_kef = null;
 private $data_start = null;
 private $buffer_size = null;
+private $file_buffer = null;
+private $web_buffer = null;
 
 public function setBufferSize(int $buffer_size){
 
-	if($buffer_size < Settings::MIN_BUFFER_SIZE){
+	if($buffer_size < \tpkarras\KEF\Settings\MIN_BUFFER_SIZE){
 
 	$this->clearData();
 
-	throw new KEFException(3, 9, "Less than minimum buffer size");
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Less than minimum buffer size");
 
 	}
 
@@ -482,115 +490,21 @@ $this->buffer_size = $buffer_size;
 private function buffer(int $level = 1){
 
 	if($level < 1){
-	
-	throw new KEFException(2, 9, "Parameter \"level\" less than 1");
+
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError("Parameter \"level\" less than 1");
 
 	}
 
 //CURL buffer
-	if(is_string($this->data) && preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($data))){
-	
-	$response_code = null;
+	if(is_string($this->data) && preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($this->data))){
 
-	$checksum = null;
-
-	$total_length = null;
-
-	$ch = curl_init($this->data);
-
-	curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$this->buffer_size * ($level - 1)."-".$this->buffer_size * $level - 1]);
-
-	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25.1 (https://github.com/tpkarras)");
-
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-	curl_setopt($ch, CURLOPT_HEADERFUNCTION,
-
-  	function($curl, $header) use (&$response_code, &$checksum, &$total_length)
- 	{
-  	
-    $len = strlen($header);
-    
-    	if(preg_match("/\d{3}/", $header, $response) && is_null($response_code)){
-    	
-    	$response_code = intval($response[0]);
-    	unset($response);
-    
-    	} else {
-    	
-    	$header = explode(':', $header, 2);
-    
-    		if(count($header) == 2){
-    	
-    			if(strtolower($header[0]) == "content-length" && is_null($total_length)){
-    	
-				$total_length = intval(trim($header[1]));
-					
-				}
-	
-    			if(strtolower($header[0]) == "etag" && is_null($checksum)){
-    	
-				$checksum = str_replace("\"", "", trim($header[1]));
-  
- 				}
-    
-    		}
-    
-    	}
-    
-	return $len;
-  	}
-
-	);
-
-	$buffer = curl_exec($ch);
-
-	curl_close($ch);
-
-		if(array_search($response_code, [200, 206]) === false){
-	
-		throw new KEFException(2, 12);
-
-		}
+	return ($this->web_buffer)($this->data, $this->buffer_size, $level);
 
 //File buffer
 	} else {
-
-	fseek($this->data, $this->buffer_size * ($level - 1));
-
-	$buffer = fread($this->data, $this->buffer_size);
-
-		if($buffer === false){
+		
+	return ($this->file_buffer)($this->data, $this->buffer_size, $level);
 	
-		throw new KEFException(2, 12);
-
-		}
-
-	rewind($this->data);
-
-	}
-
-	if(strlen($buffer) == 0){
-	
-	throw new KEFException(2, 9, "Buffer is not supposed to be empty");
-
-	}
-
-//Array for CURL buffer info
-	if(is_string($this->data) && preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($this->data))){
-	
-	$info = array();
-
-	$info[0] = $checksum;
-	$info[1] = $total_length;
-	$info[2] = $buffer;
-
-	return $info;
-
-	} else {
-	
-	return $buffer;
-
 	}
 
 }
@@ -813,7 +727,7 @@ $current_position++;
 	
 	$this->clearData();
 
-	throw new KEFException(2, 8);
+	throw new \tpkarras\KEF\Exceptions\FileError(3);
 
 	}
 
@@ -834,7 +748,7 @@ $current_position++;
 	
 			if(is_null($this->content_type)){
 	
-			$content_type .= convertCharacter($size_array_element);
+			$content_type .= \tpkarras\KEF\Tools\convertCharacter($size_array_element);
 
 			$size_array_element = 0;
 
@@ -872,7 +786,7 @@ $current_position++;
 	
 		try {
 
-		$this->cipher = CipherTools::convertCipher($cipher);
+		$this->cipher = \tpkarras\KEF\Tools\convertCipher($cipher);
 
 		} catch (Exception $e){
 	
@@ -899,11 +813,11 @@ $current_position++;
 
 		} else if(is_null($this->byte_range) && $octet_count == 0){
 	
-			if($size_array_element < Settings::MIN_BYTES || $size_array_element > Settings::MAX_BYTES){
+			if($size_array_element < \tpkarras\KEF\Settings\MIN_BYTES || $size_array_element > \tpkarras\KEF\Settings\MAX_BYTES){
 	
 			$this->clearData();
 
-			throw new KEFException(2, 1);
+			throw new \tpkarras\KEF\Exceptions\InvalidValueError("Array size element not in range");
 
 			}
 
@@ -965,21 +879,138 @@ $this->data_start = $data_start;
 }
 
 //Initialization function
-public function __construct(string $data, int $buffer_size = 0){
+public function __construct(string $data, int $buffer_size = 0, callable|null $file_buffer = null, callable|null $web_buffer = null){
 
 	if(empty($data)){
 	
-	throw new KEFException(0, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
+
+	}
+
+	if(!is_null($web_buffer)){
+		
+	$this->web_buffer = $web_buffer;
+
+	} else {
+
+	$this->web_buffer = function(string $data, int $buffer_size, int $level){
+		
+	$response_code = null;
+
+	$checksum = null;
+
+	$total_length = null;
+
+	$ch = curl_init($data);
+
+	curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$buffer_size * ($level - 1)."-".$buffer_size * $level - 1]);
+
+	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25.2 (https://github.com/tpkarras)");
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+	curl_setopt($ch, CURLOPT_HEADERFUNCTION,
+
+	function($curl, $header) use (&$response_code, &$checksum, &$total_length) {
+
+	$len = strlen($header);
+
+		if(preg_match("/\d{3}/", $header, $response) && is_null($response_code)){
+		
+		$response_code = intval($response[0]);
+		unset($response);
+
+		} else {
+		
+		$header = explode(':', $header, 2);
+
+			if(count($header) == 2){
+		
+				if(strtolower($header[0]) == "content-length" && is_null($total_length)){
+		
+				$total_length = intval(trim($header[1]));
+					
+				}
+
+				if(strtolower($header[0]) == "etag" && is_null($checksum)){
+		
+				$checksum = str_replace("\"", "", trim($header[1]));
+
+				}
+
+			}
+
+		}
+
+	return $len;
+	
+	}
+
+	);
+
+	$buffer = curl_exec($ch);
+
+	curl_close($ch);
+
+		if(array_search($response_code, [200, 206]) === false){
+
+		throw new \tpkarras\KEF\Exceptions\FileError(2);
+
+		}
+
+	//Array for CURL buffer info
+		
+	$info = array();
+
+	$info[0] = $checksum;
+	$info[1] = $total_length;
+	$info[2] = $buffer;
+
+	return $info;
+
+	};
+
+	}
+
+	if(!is_null($file_buffer)){
+		
+	$this->file_buffer = $file_buffer;
+		
+	} else {
+
+	$this->file_buffer = function($data, int $buffer_size, int $level){
+
+	fseek($data, $buffer_size * ($level - 1));
+
+	$buffer = fread($data, $buffer_size);
+
+		if($buffer === false){
+
+		throw new \tpkarras\KEF\Exceptions\FileError(2);
+
+		}
+
+	rewind($data);
+
+		if(strlen($buffer) == 0){
+
+		throw new \tpkarras\KEF\InvalidValueError("Buffer is not supposed to be empty");
+
+		}
+		
+	return $buffer;
+
+	};
 
 	}
 
 	if($buffer_size != 0){
-	
+
 	$this->setBufferSize($buffer_size);
 
 	} else {
-	
-	$this->buffer_size = Settings::MIN_BUFFER_SIZE;
+
+	$this->buffer_size = \tpkarras\KEF\Settings\MIN_BUFFER_SIZE;
 
 	}
 
@@ -992,7 +1023,7 @@ public function decrypt(array $passphrase, string|null $aad = null, int $start =
 
 	if(empty($passphrase)){
 	
-	throw new KEFException(1, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
@@ -1000,14 +1031,14 @@ public function decrypt(array $passphrase, string|null $aad = null, int $start =
 foreach($passphrase as $p){
 	
 	if(!is_string($p)){
-
-	throw new KEFException(1, 9, "Passphrase in array is not a string");
+	
+	throw new \tpkarras\KEF\InvalidValueError("Passphrase in array is not a string");
 
 	}
 
 	if(empty($p)){
 
-	throw new KEFException(1, 9, "Passphrase cannot be empty");
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
@@ -1016,14 +1047,14 @@ foreach($passphrase as $p){
 //Check if AAD is a non-empty string
 	if(is_string($aad) && empty($aad)){
 	
-	throw new KEFException(1, 4);
+	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
 	}
 
 //Multiple passphrases requirement if file was encrypted with multi-encrypt feature
 	if($this->multi_encrypt_split > 0 && count($passphrase) == 1){
 
-	throw new KEFException(1, 9, "This file has been encrypted with multiple passphrases, only 1 passphrase is in array");
+	throw new \tpkarras\KEF\InvalidValueError("This file has been encrypted with multiple passphrases, only 1 passphrase is in array");
 	
 	}
 
@@ -1053,26 +1084,26 @@ $data = $this->buffer($buffer_level);
 //Check if valid range
 
 	if($start < 0 || $end < -1){
-	
-	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" cannot be less than 0");
+
+	throw new \tpkarras\KEF\InvalidValueError("\"\$start\"/\"\$end\" cannot be less than 0");
 
 	}
 
 	if($start > $this->content_length - 1 || $end > $this->content_length - 1){
-	
-	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" greater than original byte range");
+
+	throw new \tpkarras\KEF\InvalidValueError("\"\$start\"/\"\$end\" greater than original byte range");
 
 	}
 
 	if($end > -1 && ($start > $end || $end < $start)){
-
-	throw new KEFException(1, 9, "\"\$start\"/\"\$end\" has invalid range");
+	
+	throw new \tpkarras\KEF\InvalidValueError("\"\$start\"/\"\$end\" has invalid range");
 
 	}
 
 $has_iv = false;
 
-	if(CipherTools::supportsIV($this->cipher) > 0){
+	if(\tpkarras\KEF\Tools\supportsIV($this->cipher) > 0){
 	
 	$has_iv = true;
 
@@ -1281,13 +1312,13 @@ $remaining = $this->buffer_size - $current_position;
 
 		if(isset($remainder)){
 	
-		$current_length = convertCharacter($remainder);
+		$current_length = \tpkarras\KEF\Tools\convertCharacter($remainder);
 
 		unset($remainder);
 
 		} else {
 	
-		$current_length = convertCharacter(substr($data, $current_position, $length));
+		$current_length = \tpkarras\KEF\Tools\convertCharacter(substr($data, $current_position, $length));
 
 		$current_position = $current_position + $length;
 
@@ -1382,7 +1413,7 @@ $remaining = $this->buffer_size - $current_position;
 
 		if(is_bool($decrypted) || is_null($decrypted)){
 	
-		throw new KEFException(1, 3);
+		throw new \tpkarras\KEF\Exceptions\OpenSSLError();
 
 		}
 
@@ -1462,7 +1493,7 @@ unset($started);
 
 	if($start == 0 && $end + 1 == $this->content_length && (strlen($decrypted_data) != $this->content_length || !hash_equals($this->checksum_original, md5($decrypted_data)))){
 	
-	throw new KEFException(1, 13);
+	throw new \tpkarras\KEF\Exceptions\NotFoundError();
 
 	}
 
