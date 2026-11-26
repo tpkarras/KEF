@@ -2,12 +2,24 @@
 namespace tpkarras\KEF;
 
 //Encrypt Data to KEF format
-function encryptData(string $data, array $passphrase, string $cipher, int $byte_range = 0, int $multi_encrypt_split = 0, string|null $aad = null, string|null $output = null){
+function encryptData($data, array $passphrase, string $cipher, int $byte_range = 0, int $multi_encrypt_split = 0, string|null $aad = null, string|null $output = null){
 
 	if(empty($data) || empty($passphrase) || empty($cipher) || $byte_range < 0 || $multi_encrypt_split < 0 || is_string($output) && empty($output)){
 	
 	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
 
+	}
+	
+	if(!is_resource($data) && !is_string($data)){
+	
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError();
+		
+	}
+	
+	if(is_resource($data) && fstat($data)["size"] == 0){
+		
+	throw new \tpkarras\KEF\Exceptions\ContentsCannotBeEmptyError();
+	
 	}
 
 //Check if passphrases are non-empty strings
@@ -109,12 +121,25 @@ $cipher_octet = \tpkarras\KEF\Tools\convertCipher($cipher);
 
 	$file = fopen($output, "wb");
 
-	$tmp_file = tmpfile();
-
 	}
+	
+//Create buffers
+	$tmp = tmpfile();
+	$buffer = array();
 
 //Load data
-	if(is_file($data)){
+	if(is_resource($data)){
+
+	$total_length = fstat($data)["size"];
+	
+	$checksum = hash_init('md5');
+	hash_update_stream($checksum, $data);
+	$checksum = hash_final($checksum);
+	rewind($data);
+	
+	$content_type = mime_content_type($data);
+	
+	} else if(is_file($data)){
 	
 	$total_length = filesize($data);
 
@@ -247,26 +272,8 @@ $row = $length.$row;
 	}
 
 //Buffer
-	if(isset($tmp_file)){
-
-		if(!isset($buffer)){
-	
-		$buffer = strlen($row);
-
-		} else {
-	
-		$buffer = $buffer + strlen($row);
-
-		}
-
-//Append data
-	fwrite($tmp_file, $row);
-
-	} else {
-	
-	$current_data .= $row;
-
-	}
+array_push($buffer, strlen($row));
+fwrite($tmp, $row);
 
 unset($row);
 
@@ -430,23 +437,41 @@ unset($key);
 }
 
 //File creation
-	if(isset($tmp_file)){
+	if(isset($file)){
 	
 	fwrite($file, $octets);
+	
+	} else {
+		
+	$current_data = $octets;
+	
+	}
 
-	rewind($tmp_file);
+rewind($tmp);
 
-	fwrite($file, fread($tmp_file, $buffer));
+foreach($buffer as $l){
+	
+	if(isset($file)){
+		
+	fwrite($file, fread($tmp, $l));
+	
+	} else {
+		
+	$current_data .= fread($tmp, $l);
+	
+	}
+	
+}
 
-	fclose($tmp_file);
+fclose($tmp);
+
+	if(isset($file)){
 
 	fclose($file);
 
 	return true;
 
 	} else {
-	
-	$current_data = $octets.$current_data;
 
 	return $current_data;
 
@@ -623,10 +648,21 @@ private function clearData(){
 }
 
 //Internal function to import data
-private function importData(string $data){
+private function importData($data){
 
 //Prepare data if file/URL/string
-	if(preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($data))){
+	if(is_resource($data)){
+
+	$total_length = fstat($data)["size"];
+	
+	$checksum = hash_init('md5');
+	hash_update_stream($checksum, $data);
+	$checksum = hash_final($checksum);
+	rewind($data);
+	
+	$this->data = $data;
+		
+	} else if(preg_match("/^https?\:\/\/(?:www\.)?[^\s]+(?:\.[a-z])+/", strtolower($data))){
 	
 	$data = htmlentities($data);
 
@@ -879,12 +915,24 @@ $this->data_start = $data_start;
 }
 
 //Initialization function
-public function __construct(string $data, int $buffer_size = 0, callable|null $file_buffer = null, callable|null $web_buffer = null){
-
-	if(empty($data)){
+public function __construct($data, int $buffer_size = 0, callable|null $file_buffer = null, callable|null $web_buffer = null){
 	
+	if(empty($data)){
+		
 	throw new \tpkarras\KEF\Exceptions\MissingRequiredParametersError();
-
+	
+	}
+	
+	if(!is_resource($data) && !is_string($data)){
+	
+	throw new \tpkarras\KEF\Exceptions\InvalidValueError();
+	
+	}
+	
+	if(is_resource($data) && fstat($data)["size"] == 0){
+		
+	throw new \tpkarras\KEF\Exceptions\ContentsCannotBeEmptyError();
+	
 	}
 
 	if(!is_null($web_buffer)){
@@ -905,7 +953,7 @@ public function __construct(string $data, int $buffer_size = 0, callable|null $f
 
 	curl_setopt($ch, CURLOPT_HTTPHEADER, ["Range: bytes=".$buffer_size * ($level - 1)."-".$buffer_size * $level - 1]);
 
-	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25.2 (https://github.com/tpkarras)");
+	curl_setopt($ch, CURLOPT_USERAGENT, "tpkarras/KEF/1.5.25.3 (https://github.com/tpkarras)");
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
