@@ -150,20 +150,20 @@ $cipher_octet = \tpkarras\KEF\Tools\convertCipher($cipher);
 	$content_type = mime_content_type($data);
 
 	} else {
-	
-	$tmp = tmpfile();
-
-	fwrite($tmp, $data);
-
-	$content_type = mime_content_type($tmp);
-
-	fclose($tmp);
-
-	$total_length = strlen($data);
-
+		
 	$checksum = md5($data);
+	
+	$total_length = strlen($data);
+	
+	$tmp_data = tmpfile();
 
-	$data = str_split($data, $byte_range);
+	fwrite($tmp_data, $data);
+	
+	$data = $tmp_data;
+	
+	rewind($data);
+
+	$content_type = mime_content_type($data);
 
 	}
 
@@ -224,16 +224,8 @@ while($current_range < intval(ceil($total_length / $byte_range))){
 //Initialize tag variable
 $tag = null;
 
-//Read data from file or array
-	if(!is_array($data)){
-	
-	$r = fread($data, $byte_range);
-
-	} else {
-	
-	$r = $data[$current_range];
-
-	}
+//Read data
+$r = fread($data, $byte_range);
 
 //Call encryption function
 $row = openssl_encrypt($r, $cipher, $current_passphrase, OPENSSL_RAW_DATA, $iv, $tag, $aad);
@@ -652,13 +644,14 @@ private function importData($data){
 
 //Prepare data if file/URL/string
 	if(is_resource($data)){
-
-	$total_length = fstat($data)["size"];
+	
+	$this->kef_length = fstat($data)["size"];
 	
 	$checksum = hash_init('md5');
 	hash_update_stream($checksum, $data);
-	$checksum = hash_final($checksum);
+	$this->checksum_kef = hash_final($checksum);
 	rewind($data);
+	unset($checksum);
 	
 	$this->data = $data;
 		
@@ -670,9 +663,9 @@ private function importData($data){
 
 	} else if(is_file($data)){
 
-	$total_length = filesize($data);
+	$this->kef_length = filesize($data);
 
-	$checksum = md5_file($data);
+	$this->checksum_kef = md5_file($data);
 
 	$this->data = fopen($data, "rb");
 
@@ -926,12 +919,6 @@ public function __construct($data, int $buffer_size = 0, callable|null $file_buf
 	if(!is_resource($data) && !is_string($data)){
 	
 	throw new \tpkarras\KEF\Exceptions\InvalidValueError();
-	
-	}
-	
-	if(is_resource($data) && fstat($data)["size"] == 0){
-		
-	throw new \tpkarras\KEF\Exceptions\ContentsCannotBeEmptyError();
 	
 	}
 
